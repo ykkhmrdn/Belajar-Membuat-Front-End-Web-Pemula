@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", function () {
         addTodo();
     });
 
+    if (isStorageExist()) {
+        loadDataFromStorage();
+    }
+
 });
 
 function addTodo() {
@@ -20,6 +24,7 @@ function addTodo() {
     todos.push(todoObject);
 
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData();
 }
 
 function generateID() {
@@ -106,6 +111,7 @@ function addTaskToCompleted (todoId) {
 
     todoTarget.isCompleted = true;
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData();
 }
 
 function findTodo (todoId) {
@@ -136,6 +142,7 @@ function removeTaskFromCompleted (todoId) {
     todos.splice(todoTarget, 1);
 
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData();
 }
 
 function undoTaskFromCompleted (todoId) {
@@ -146,5 +153,52 @@ function undoTaskFromCompleted (todoId) {
     todoTarget.isCompleted = false;
 
     document.dispatchEvent(new Event(RENDER_EVENT));
+    saveData();
 }
 
+function saveData() {
+    if (isStorageExist()) {
+        const parsed = JSON.stringify(todos);
+        localStorage.setItem(STORAGE_KEY, parsed);
+        document.dispatchEvent(new Event(SAVED_EVENT));
+    }
+}
+
+const SAVED_EVENT = 'saved-todo';
+const STORAGE_KEY = "TODO_APPS";
+
+function isStorageExist(){
+    if(typeof(Storage) === undefined){
+        alert("Browser kamu tidak mendukung local storage");
+        return false
+    }
+    return true;
+}
+
+
+document.addEventListener(SAVED_EVENT, function () {
+    let data = localStorage.getItem(STORAGE_KEY);
+    console.log(data);
+
+    Swal.fire({
+        title: 'Data Saved!',
+        text: 'Your data has been saved to local storage.',
+        icon: 'success',
+        confirmButtonText: 'OK!'
+    });
+});
+
+
+function loadDataFromStorage() {
+    const serializedData = localStorage.getItem(STORAGE_KEY);
+
+    let data = JSON.parse(serializedData);
+
+    if (data !== null) {
+        for (const todo of data) {
+            todos.push(todo);
+        }
+    }
+
+    document.dispatchEvent(new Event(RENDER_EVENT));
+}
